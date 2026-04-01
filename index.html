@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YogaPath | Ultimate Asana Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;600;700&display=swap');
+        body { font-family: 'Quicksand', sans-serif; background-color: #fdfbf7; }
+        .asana-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="bg-emerald-700 text-white p-6 shadow-lg">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <h1 class="text-3xl font-bold mb-4 md:mb-0"><i class="fas fa-om mr-2"></i>YogaPath</h1>
+            <div class="relative w-full md:w-96">
+                <input type="text" id="searchInput" placeholder="Search asana (e.g. Cobra, Adho Mukha...)" 
+                    class="w-full px-4 py-2 rounded-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <i class="fas fa-search absolute right-4 top-3 text-gray-400"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Filters -->
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-wrap gap-3 justify-center mb-10" id="filterButtons">
+            <button onclick="filterAsanas('all')" class="px-6 py-2 rounded-full bg-emerald-100 text-emerald-800 hover:bg-emerald-600 hover:text-white transition active">All Poses</button>
+            <button onclick="filterAsanas('standing')" class="px-6 py-2 rounded-full bg-emerald-100 text-emerald-800 hover:bg-emerald-600 hover:text-white transition">Standing</button>
+            <button onclick="filterAsanas('seated')" class="px-6 py-2 rounded-full bg-emerald-100 text-emerald-800 hover:bg-emerald-600 hover:text-white transition">Seated</button>
+            <button onclick="filterAsanas('inversion')" class="px-6 py-2 rounded-full bg-emerald-100 text-emerald-800 hover:bg-emerald-600 hover:text-white transition">Inversion</button>
+            <button onclick="filterAsanas('backbend')" class="px-6 py-2 rounded-full bg-emerald-100 text-emerald-800 hover:bg-emerald-600 hover:text-white transition">Backbend</button>
+        </div>
+
+        <!-- Asana Grid -->
+        <div id="asanaGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Cards will be injected here by JS -->
+        </div>
+    </div>
+
+    <!-- Modal for Details -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-2xl text-gray-500 hover:text-gray-800">&times;</button>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <footer class="bg-emerald-900 text-emerald-100 py-10 mt-20 text-center">
+        <p>© 2023 YogaPath Guide. Namaste.</p>
+    </footer>
+
+    <script>
+        // Data Structure - Add all your asanas here
+        const asanas = [
+            {
+                id: 1,
+                englishName: "Mountain Pose",
+                sanskritName: "Tadasana",
+                category: "standing",
+                difficulty: "Beginner",
+                benefits: ["Improves posture", "Strengthens thighs", "Steadies breathing"],
+                description: "The foundation of all standing poses, Tadasana improves focus and body awareness.",
+                steps: ["Stand with big toes touching.", "Relax shoulders back and down.", "Engage core and breathe deeply."],
+                image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                id: 2,
+                englishName: "Downward-Facing Dog",
+                sanskritName: "Adho Mukha Svanasana",
+                category: "inversion",
+                difficulty: "Beginner/Intermediate",
+                benefits: ["Calms the brain", "Energizes the body", "Stretches shoulders and hamstrings"],
+                description: "One of the most widely recognized yoga poses, providing a full-body stretch.",
+                steps: ["Start on hands and knees.", "Lift knees and push hips toward the ceiling.", "Straighten legs and reach heels toward floor."],
+                image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80"
+            },
+            {
+                id: 3,
+                englishName: "Cobra Pose",
+                sanskritName: "Bhujangasana",
+                category: "backbend",
+                difficulty: "Beginner",
+                benefits: ["Strengthens spine", "Opens chest and lungs", "Relieves stress"],
+                description: "A gentle backbend often done in Sun Salutations.",
+                steps: ["Lie face down.", "Place hands under shoulders.", "Lift chest off the floor while keeping hips down."],
+                image: "https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=800&q=80"
+            }
+            // Add more asanas here following the same format
+        ];
+
+        const grid = document.getElementById('asanaGrid');
+        const searchInput = document.getElementById('searchInput');
+
+        // Function to render cards
+        function renderAsanas(data) {
+            grid.innerHTML = data.map(asana => `
+                <div class="asana-card bg-white rounded-xl shadow-md overflow-hidden cursor-pointer border border-emerald-50" onclick="showDetails(${asana.id})">
+                    <img src="${asana.image}" class="h-48 w-full object-cover" alt="${asana.englishName}">
+                    <div class="p-5">
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">${asana.difficulty}</span>
+                        <h3 class="text-xl font-bold text-gray-800">${asana.englishName}</h3>
+                        <p class="text-gray-500 italic mb-2">${asana.sanskritName}</p>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-1 bg-gray-100 text-xs rounded">${asana.category}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Search Functionality
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const filtered = asanas.filter(a => 
+                a.englishName.toLowerCase().includes(term) || 
+                a.sanskritName.toLowerCase().includes(term)
+            );
+            renderAsanas(filtered);
+        });
+
+        // Category Filter
+        function filterAsanas(cat) {
+            if (cat === 'all') {
+                renderAsanas(asanas);
+            } else {
+                const filtered = asanas.filter(a => a.category === cat);
+                renderAsanas(filtered);
+            }
+        }
+
+        // Modal Logic
+        function showDetails(id) {
+            const asana = asanas.find(a => a.id === id);
+            const content = document.getElementById('modalContent');
+            content.innerHTML = `
+                <img src="${asana.image}" class="w-full h-64 object-cover rounded-xl mb-6">
+                <h2 class="text-3xl font-bold text-emerald-800">${asana.englishName}</h2>
+                <p class="text-xl italic text-gray-600 mb-4">${asana.sanskritName}</p>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">Benefits</h4>
+                        <ul class="list-disc list-inside text-gray-700">
+                            ${asana.benefits.map(b => `<li>${b}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-2">How to Perform</h4>
+                        <ol class="list-decimal list-inside text-gray-700">
+                            ${asana.steps.map(s => `<li>${s}</li>`).join('')}
+                        </ol>
+                    </div>
+                </div>
+                <div class="mt-6 p-4 bg-emerald-50 rounded-lg">
+                    <p class="text-gray-800 leading-relaxed">${asana.description}</p>
+                </div>
+            `;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        // Initial Render
+        renderAsanas(asanas);
+    </script>
+</body>
+</html>
